@@ -63,6 +63,9 @@ func GetGOBIN(ctx context.Context) (string, error) {
 	}
 
 	output = bytes.TrimSpace(output)
+	if len(output) == 0 {
+		return "", fmt.Errorf("GOBIN not set")
+	}
 
 	return string(output), err
 }

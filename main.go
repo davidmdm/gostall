@@ -8,9 +8,30 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strings"
 )
 
 func main() {
+	var help bool
+	for _, arg := range os.Args[1:] {
+		if arg == "-h" || arg == "--help" {
+			help = true
+			break
+		}
+	}
+
+	if help {
+		fmt.Println(
+			strings.Join([]string{
+				"Gostall build go executable to GOBIN with any name you want.",
+				"",
+				"Usage:",
+				"    gostall PATH_TO_PACKAGE BINARY_NAME",
+			}, "\n"),
+		)
+		return
+	}
+
 	if len(os.Args) != 3 {
 		fatalf("gostall: Need two positional arguments: gostall [path] [name]")
 	}

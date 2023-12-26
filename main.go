@@ -16,22 +16,28 @@ import (
 	"github.com/davidmdm/x/xcontext"
 )
 
-func main() {
-	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-}
+var binaryName = os.Args[0]
 
 //go:embed usage.txt
 var usage string
+
+func init() {
+	usage = fmt.Sprintf(usage, binaryName, binaryName)
+}
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %v\n", binaryName, err)
+		os.Exit(1)
+	}
+}
 
 func run() error {
 	flag.Usage = func() { fmt.Fprintln(os.Stderr, usage) }
 	flag.Parse()
 
 	if len(flag.Args()) != 2 {
-		return errors.New("gostall: Need two positional arguments: gostall [path] [name]")
+		return errors.New("need two positional arguments: [path] [name]")
 	}
 
 	ctx, cancel := xcontext.WithSignalCancelation(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -39,13 +45,13 @@ func run() error {
 
 	gobin, err := GetGoVar(ctx, "GOBIN")
 	if err != nil {
-		return fmt.Errorf("gostall: failed to get GOBIN: %v", err)
+		return fmt.Errorf("failed to get GOBIN: %v", err)
 	}
 
 	path, name := flag.Arg(0), flag.Arg(1)
 
 	build := func() BuildFunc {
-		if path == "." || strings.HasPrefix(path, "./") || strings.HasPrefix(path, "/") {
+		if _, err := os.Stat(path); err == nil {
 			return buildLocalPath
 		}
 		return buildRemotePath

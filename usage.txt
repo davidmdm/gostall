@@ -1,6 +1,6 @@
-gostall
+%s
 
 build go executable to GOBIN with any name you want.
 
 Usage:
-    gostall PATH_TO_PACKAGE BINARY_NAME
+    %s PATH_TO_PACKAGE BINARY_NAME

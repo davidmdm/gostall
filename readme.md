@@ -34,6 +34,19 @@ gostall ./myproject mybinary
 gostall github.com/user/repo@latest mybinary
 ```
 
+### Local Output
+
+By default _gostall_ builds your binaries under GOBIN with the name provided for them.
+If however the name argument is a multi segment filepath it will build it to that location instead.
+
+```bash
+# Install to under GOBIN
+gostall github.com/user/repo@latest example
+
+# Install/Build it to the current working directory as `./example`
+gostall github.com/user/repo@latest ./example
+```
+
 ## Installation
 
 ```bash

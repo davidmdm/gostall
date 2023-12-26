@@ -43,12 +43,24 @@ func run() error {
 	ctx, cancel := xcontext.WithSignalCancelation(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	gobin, err := GetGoVar(ctx, "GOBIN")
-	if err != nil {
-		return fmt.Errorf("failed to get GOBIN: %v", err)
-	}
-
 	path, name := flag.Arg(0), flag.Arg(1)
+
+	outputFile, err := func() (string, error) {
+		segments := strings.Split(name, string([]byte{os.PathSeparator}))
+		if len(segments) != 1 {
+			return name, nil
+		}
+
+		gobin, err := GetGoVar(ctx, "GOBIN")
+		if err != nil {
+			return "", fmt.Errorf("failed to get GOBIN: %v", err)
+		}
+
+		return filepath.Join(gobin, name), nil
+	}()
+	if err != nil {
+		return fmt.Errorf("failed to determine outputfile for binary: %w", err)
+	}
 
 	build := func() BuildFunc {
 		if _, err := os.Stat(path); err == nil {
@@ -57,18 +69,18 @@ func run() error {
 		return buildRemotePath
 	}()
 
-	return build(ctx, gobin, path, name)
+	return build(ctx, path, outputFile)
 }
 
-type BuildFunc = func(ctx context.Context, gobin, path, name string) error
+type BuildFunc = func(ctx context.Context, path, out string) error
 
-func buildLocalPath(ctx context.Context, gobin, path, name string) error {
-	build := exec.CommandContext(ctx, "go", "build", "-o", filepath.Join(gobin, name), path)
+func buildLocalPath(ctx context.Context, path, out string) error {
+	build := exec.CommandContext(ctx, "go", "build", "-o", out, path)
 	build.Stdout, build.Stderr, build.Stdin = os.Stdout, os.Stderr, os.Stdin
 	return build.Run()
 }
 
-func buildRemotePath(ctx context.Context, gobin, path, name string) error {
+func buildRemotePath(ctx context.Context, path, out string) error {
 	temp, err := os.MkdirTemp("", "")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary module: %w", err)
@@ -92,7 +104,7 @@ func buildRemotePath(ctx context.Context, gobin, path, name string) error {
 
 	base, _, _ := strings.Cut(path, "@")
 
-	if err := cmd(ctx, "go", "build", "-o", filepath.Join(gobin, name), base); err != nil {
+	if err := cmd(ctx, "go", "build", "-o", out, base); err != nil {
 		return fmt.Errorf("failed to install %s: %w", base, err)
 	}
 

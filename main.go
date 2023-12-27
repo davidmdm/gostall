@@ -48,7 +48,7 @@ func run() error {
 	outputFile, err := func() (string, error) {
 		segments := strings.Split(name, string([]byte{os.PathSeparator}))
 		if len(segments) != 1 {
-			return name, nil
+			return filepath.Abs(name)
 		}
 
 		gobin, err := GetGoVar(ctx, "GOBIN")
@@ -56,7 +56,7 @@ func run() error {
 			return "", fmt.Errorf("failed to get GOBIN: %v", err)
 		}
 
-		return filepath.Join(gobin, name), nil
+		return filepath.Abs(filepath.Join(gobin, name))
 	}()
 	if err != nil {
 		return fmt.Errorf("failed to determine outputfile for binary: %w", err)

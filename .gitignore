@@ -1,4 +1,8 @@
 .vscode
 .idea
 
+coverage
+
+test_output
+
 *.out

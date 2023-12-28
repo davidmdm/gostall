@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,7 +31,6 @@ func TestMain(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, file.Close())
 
-	fmt.Println(coverDir)
 	args := []string{"build", "-o", file.Name()}
 	if coverDir != "" {
 		args = append(args, "-cover", "-coverpkg=github.com/davidmdm/gostall")

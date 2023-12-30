@@ -9,23 +9,8 @@ gostall is a lightweight Go build tool that empowers you to take control of your
 Sometimes we need to install binaries but do not want them to be installed under their module or folder name.
 For local packages we can use the `go build -o PATH_TO_BIN`, however this does not work when working with remote packages. There's no equivalent `go install -o` flag either.
 
-See these examples:
-
-```bash
-go build -o ./exe github.com/davidmdm/gostall@latest
-
-package github.com/davidmdm/gostall@latest: can only use path@version syntax with 'go get' and 'go install' in module-aware mode
-```
-
-```bash
-go install -o my_exe github.com/davidmdm/gostall@latest
-
-flag provided but not defined: -o
-usage: go install [build flags] [packages]
-Run 'go help install' for details.
-```
-
-Gostall makes installing Go packages under any name or local path easy with a single unified command.
+Have you ever tried to install a local package but its folder has an unfortunate name such as _cmd_ or _src_ ? Gostall can help.
+Have you ever tried to install a different version of a binary and do not want the new install to override your old one? Gostall can help.
 
 ## Usage
 

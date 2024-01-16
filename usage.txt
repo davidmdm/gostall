@@ -3,4 +3,7 @@
 build go executable to GOBIN with any name you want.
 
 Usage:
-    %s PATH_TO_PACKAGE BINARY_NAME
+    %s PATH_TO_PACKAGE BINARY_NAME -- [BUILD_FLAGS]
+
+Subcommands:
+  version - print version information

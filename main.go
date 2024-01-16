@@ -10,13 +10,17 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 
 	"github.com/davidmdm/x/xcontext"
 )
 
-var binaryName = os.Args[0]
+var (
+	Version    = "v0.0.7"
+	binaryName = os.Args[0]
+)
 
 //go:embed usage.txt
 var usage string
@@ -36,9 +40,22 @@ func run() error {
 	flag.Usage = func() { fmt.Fprintln(os.Stderr, usage) }
 	flag.Parse()
 
-	if len(flag.Args()) != 2 {
+	if flag.Arg(0) == "version" {
+		fmt.Println(Version)
+		return nil
+	}
+
+	if len(flag.Args()) < 2 {
 		return errors.New("need two positional arguments: [path] [name]")
 	}
+
+	subargs := func() []string {
+		idx := slices.Index(flag.Args(), "--")
+		if idx < 2 {
+			return nil
+		}
+		return flag.Args()[idx+1:]
+	}()
 
 	ctx, cancel := xcontext.WithSignalCancelation(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
@@ -69,18 +86,21 @@ func run() error {
 		return buildRemotePath
 	}()
 
-	return build(ctx, path, outputFile)
+	return build(ctx, path, outputFile, subargs)
 }
 
-type BuildFunc = func(ctx context.Context, path, out string) error
+type BuildFunc = func(ctx context.Context, path, out string, args []string) error
 
-func buildLocalPath(ctx context.Context, path, out string) error {
-	build := exec.CommandContext(ctx, "go", "build", "-o", out, path)
+func buildLocalPath(ctx context.Context, path, out string, args []string) error {
+	args = append([]string{"build"}, args...)
+	args = append(args, "-o", out, path)
+
+	build := exec.CommandContext(ctx, "go", args...)
 	build.Stdout, build.Stderr, build.Stdin = os.Stdout, os.Stderr, os.Stdin
 	return build.Run()
 }
 
-func buildRemotePath(ctx context.Context, path, out string) error {
+func buildRemotePath(ctx context.Context, path, out string, args []string) error {
 	temp, err := os.MkdirTemp("", "")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary module: %w", err)
@@ -104,7 +124,10 @@ func buildRemotePath(ctx context.Context, path, out string) error {
 
 	base, _, _ := strings.Cut(path, "@")
 
-	if err := cmd(ctx, "go", "build", "-o", out, base); err != nil {
+	args = append([]string{"build"}, args...)
+	args = append(args, "-o", out, base)
+
+	if err := cmd(ctx, "go", args...); err != nil {
 		return fmt.Errorf("failed to install %s: %w", base, err)
 	}
 

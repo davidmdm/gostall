@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"syscall"
@@ -18,12 +19,11 @@ import (
 )
 
 var (
-	Version    = "v0.0.7"
+	//go:embed usage.txt
+	usage string
+
 	binaryName = os.Args[0]
 )
-
-//go:embed usage.txt
-var usage string
 
 func init() {
 	usage = fmt.Sprintf(usage, binaryName, binaryName)
@@ -43,7 +43,7 @@ func run() error {
 	flag.CommandLine.Parse(args)
 
 	if flag.Arg(0) == "version" {
-		fmt.Println(Version)
+		fmt.Println(Version())
 		return nil
 	}
 
@@ -152,4 +152,9 @@ func cut(args []string, sep string) (before, after []string) {
 		return args, nil
 	}
 	return args[:idx], args[idx+1:]
+}
+
+func Version() string {
+	info, _ := debug.ReadBuildInfo()
+	return info.Main.Version
 }

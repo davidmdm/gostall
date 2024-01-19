@@ -37,8 +37,10 @@ func main() {
 }
 
 func run() error {
-	flag.Usage = func() { fmt.Fprintln(os.Stderr, usage) }
-	flag.Parse()
+	args, subargs := cut(os.Args[1:], "--")
+
+	flag.CommandLine.Usage = func() { fmt.Fprintln(os.Stderr, usage) }
+	flag.CommandLine.Parse(args)
 
 	if flag.Arg(0) == "version" {
 		fmt.Println(Version)
@@ -48,14 +50,6 @@ func run() error {
 	if len(flag.Args()) < 2 {
 		return errors.New("need two positional arguments: [path] [name]")
 	}
-
-	subargs := func() []string {
-		idx := slices.Index(flag.Args(), "--")
-		if idx < 2 {
-			return nil
-		}
-		return flag.Args()[idx+1:]
-	}()
 
 	ctx, cancel := xcontext.WithSignalCancelation(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
@@ -150,4 +144,12 @@ func GetGoVar(ctx context.Context, name string) (string, error) {
 	}
 
 	return string(output), err
+}
+
+func cut(args []string, sep string) (before, after []string) {
+	idx := slices.Index(args, sep)
+	if idx == -1 {
+		return args, nil
+	}
+	return args[:idx], args[idx+1:]
 }
